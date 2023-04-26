@@ -50,6 +50,9 @@ fluidPage(
                     multiple = FALSE,
                     accept = c(".bed",".txt", ".csv")),
           
+          #reset domains files
+          actionButton('reset', 'Reset Domains files'),
+          
         ),
 
         # MATplot
