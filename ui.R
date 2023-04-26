@@ -13,21 +13,48 @@ library(shiny)
 fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
+    titlePanel("HiC matrix of honey bee"),
 
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+          
+          #balanced box
+          checkboxInput("my_balanced", "balanced counts (weight)", value = FALSE),
+          
+          #log2 box
+          checkboxInput("my_log2", "log2(counts)", value = TRUE),
+          
+          #chr list
+          selectInput("my_chr", "chromosome", choices = chromosomes.df$names, selected = chromosomes.df$names[1]),
+          
+          #bin width list
+          selectInput("my_res", "bin width", choices = mcool.resolutions, selected =  mcool.resolutions[1]),
+          
+          #BUTTON to update input$start_end according to chr & bin_width (input$my_chr & input$my_res respectively)
+          #actionButton("start_end_update", "Load datas"),
+          
+          #add horizontal line
+          hr(style="height:5px;background:#000000;"),
+          
+          ###########################
+          #Domain files
+          ###########################
+          #upper Domains
+          fileInput("upper_Domain", "Upper Domains File",
+                    multiple = FALSE,
+                    accept = c(".bed",".txt")),
+          
         ),
 
-        # Show a plot of the generated distribution
+        # MATplot
         mainPanel(
-            plotOutput("distPlot")
+          sliderInput("start_end","range:", 
+                      min = 1, max =  chromosomes.df$lengths[1], 
+                      value = c(1, chromosomes.df$lengths[1]), 
+                      width = "100%", sep=",", post="bp"),
+          
+          plotOutput("render_MATplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner()
         )
     )
 )
