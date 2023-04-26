@@ -24,6 +24,7 @@ function(input, output, session) {
     subset_matrix = NULL,
     melted_subset = NULL,
     upperDom = NULL,
+    lowerDom = NULL,
     MATplot = NULL
   )
   ##################################
@@ -124,7 +125,7 @@ function(input, output, session) {
   ##################################
   ##################################
   ####################################################################
-  #upperDomain when "upper_Domain" are loaded
+  #upperDom when "upper_Domain" are loaded
   ##################################  
   observeEvent(list(input$upper_Domain, returns$chr_name), {
     
@@ -145,15 +146,40 @@ function(input, output, session) {
     subset_domains.bed = dplyr::filter(domains.bed, chr == returns$chr_name)
     validate(need(nrow(subset_domains.bed) >= 1, message = "there is no domains for this chr in upperDomain file"))
     returns$upperDom = subset_domains.bed
-    observe(print(head(returns$upperDom)))
   })
   ##################################
   ##################################
   ##################################
   ####################################################################
-  #Plots if "melted_subset + upperDom" are updated
+  #lowerDom when "lower_Domain" are loaded
+  ##################################  
+  observeEvent(list(input$lower_Domain, returns$chr_name), {
+    
+    validate(need(!is.null(input$lower_Domain), "no lowerDomain file"))
+    
+    input.df = read.table(input$lower_Domain$datapath, h=F, sep="\t")
+    
+    #check input file
+    validate(
+      need(length(input.df) >= 3, message = "Please upload bed file format (no header, tab separated)"))
+    validate(
+      need(is.numeric(input.df[,2]), message = "Column 2 is not numeric"),
+      need(is.numeric(input.df[,3]), message = "Column 3 is not numeric"))
+    
+    #prepare datas
+    domains.bed = input.df[,1:3]
+    names(domains.bed) = c("chr", "s", "e")
+    subset_domains.bed = dplyr::filter(domains.bed, chr == returns$chr_name)
+    validate(need(nrow(subset_domains.bed) >= 1, message = "there is no domains for this chr in lowerDomain file"))
+    returns$lowerDom = subset_domains.bed
+  })
+  ##################################
+  ##################################
+  ##################################
+  ####################################################################
+  #Plots if "melted_subset + upperDom + lowerDom" are updated
   ################################## 
-  observeEvent(list(returns$melted_subset, returns$upperDom), {
+  observeEvent(list(returns$melted_subset, returns$upperDom, returns$lowerDom), {
     
     #MAPplot
     returns$MAPplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset, ggplot2::aes(x = i, y = j, fill = x))+
@@ -175,12 +201,24 @@ function(input, output, session) {
         ggplot2::geom_segment(data = tad, ggplot2::aes(x = s, y = -s, xend = e2, yend = -s2), color = "red", size = 0.5)+
         ggplot2::geom_segment(data = tad, ggplot2::aes(x = e2, y = -s2, xend = e, yend = -e), color = "red", size = 0.5)
     }
+    
+    #lowerDom
+    if (!is.null(returns$lowerDom)) {
+      
+      #split Domains that are cut through the window
+      tad <- dplyr::filter(returns$lowerDom, e > input$start_end[1], s < input$start_end[2])
+      tad$e2 <- ifelse(tad$e >= input$start_end[2], input$start_end[2], tad$e)
+      tad$s2 <- ifelse(tad$s <= input$start_end[1], input$start_end[1], tad$s)
+      
+      returns$MAPplot <- returns$MAPplot+
+        ggplot2::geom_segment(data = tad, ggplot2::aes(x = s2, y = -e2, xend = e, yend = -e), color = "red", size = 0.5)+
+        ggplot2::geom_segment(data = tad, ggplot2::aes(x = s, y = -s, xend = s2, yend = -e2), color = "red", size = 0.5)
+    }
   })
   ##################################
   ##################################
   ##################################
-  
-  
+
   
   output$render_MATplot <- renderPlot({returns$MAPplot}) 
   

@@ -45,6 +45,11 @@ fluidPage(
                     multiple = FALSE,
                     accept = c(".bed",".txt")),
           
+          #lower Domains
+          fileInput("lower_Domain", "lower Domains File",
+                    multiple = FALSE,
+                    accept = c(".bed",".txt", ".csv")),
+          
         ),
 
         # MATplot
