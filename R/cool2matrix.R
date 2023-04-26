@@ -24,7 +24,6 @@
 #'
 #'
 cool2matrix <- function(cool.path, chr, bin.width = NA, balance = FALSE) {
-  
   if (!is.na(bin.width)) {message("\nParsing .mcool file.")} else {message("\nParsing .cool file.")}
   
   #mcool path
@@ -108,7 +107,7 @@ cool2matrix <- function(cool.path, chr, bin.width = NA, balance = FALSE) {
     mat_weight = Matrix::triu((w %*% t(w)))
     mat_weight[is.na(mat_weight)] <- 0 #remove NaN
     #cell by cell multiplication by the matrix weight
-    return(m * mat_weight)
+    return(methods::as(m * mat_weight, "CsparseMatrix"))
   } else {
     return(m)
   }
