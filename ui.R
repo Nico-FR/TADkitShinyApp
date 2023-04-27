@@ -13,11 +13,20 @@ library(shiny)
 fluidPage(
 
     # Application title
-    titlePanel("HiC matrix of honey bee"),
+    #titlePanel("HiC matrix"),
+    textOutput("txt_file"),
 
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
+          
+          #mcool file path
+          shinyFiles::shinyFilesButton("Btn_GetFile", "Choose .mcool file" ,
+                           title = "Please select a mcool file:", multiple = FALSE,
+                           buttonType = "default", class = NULL),
+        
+          #add horizontal line
+          hr(style="height:5px;background:#000000;"),
           
           #balanced box
           checkboxInput("my_balanced", "balanced counts (weight)", value = FALSE),
@@ -52,6 +61,12 @@ fluidPage(
           
           #reset domains files
           actionButton('reset', 'Reset Domains files'),
+          
+          #add horizontal line
+          hr(style="height:5px;background:#000000;"),
+          
+          #downloadplot
+          downloadButton("downloadPlot", label = "Download plot"),
           
         ),
 

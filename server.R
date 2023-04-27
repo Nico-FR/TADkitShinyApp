@@ -15,6 +15,7 @@ function(input, output, session) {
   #input values
   ##################################
   returns <- reactiveValues(
+    chr.lst = NULL,
     chr_name =  NULL,
     chr_size = NULL,
     bin_width =  NULL,
@@ -27,6 +28,21 @@ function(input, output, session) {
     lowerDom = NULL,
     MATplot = NULL
   )
+  ##################################
+  ##################################
+  ####################################################################
+  #mcool files path start the apps
+  ##################################
+  root = c(wd='.') #getVolumes()
+  observe({  
+    shinyFileChoose(input, "Btn_GetFile", roots = root, session = session, filetypes = c("", "mcool"))
+  })
+  output$chr.lst <- renderPrint({1:5})
+  observeEvent(input$Btn_GetFile, {
+    file_selected<-parseFilePaths(root, input$Btn_GetFile)
+    output$txt_file <- renderText(as.character(file_selected$datapath))
+  })
+
   ##################################
   ##################################
   ####################################################################
@@ -228,20 +244,29 @@ function(input, output, session) {
   ##################################
   ##################################
   ##################################
-  
+  ####################################################################
+  #renderPlot
+  ################################## 
   output$render_MATplot <- renderPlot({returns$MAPplot}) 
-  
-  observe(print(c(returns$from,  returns$to)))
-  observe(print(c(input$start_end[1],  input$start_end[2])))
-  observe(print(returns$matrix[1:10,1:10]))
-  observe(print(head(returns$melted_subset)))
-  observe(print(returns$MAPplot))
+  ##################################
+  ##################################
+  ##################################
+  ####################################################################
+  #download plot
+  ################################## 
+  output$downloadPlot <- downloadHandler(
+    filename = function() {
+      paste0(returns$chr_name, "_", input$my_res, "_", input$start_end[1], "-", input$start_end[2],".png")},
+    content = function(file) {
+      ggplot2::ggsave(file, plot = returns$MAPplot, device = "png")
+    }
+  )
+  ##################################
+  ##################################
+  ##################################
+
   
   
   
   
 }
-
-##################################
-#
-##################################
