@@ -7,8 +7,6 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
-
 # Define UI for application that draws a histogram
 fluidPage(
 
@@ -73,8 +71,8 @@ fluidPage(
         # MATplot
         mainPanel(
           sliderInput("start_end","range:", 
-                      min = 1, max =  chromosomes.df$lengths[1], 
-                      value = c(1, chromosomes.df$lengths[1]), 
+                      min = 1, max =  2, 
+                      value = c(1, 2), 
                       width = "100%", sep=",", post="bp"),
           
           plotOutput("render_MATplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner()
