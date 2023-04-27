@@ -35,10 +35,10 @@ fluidPage(
           checkboxInput("my_log2", "log2(counts)", value = TRUE),
           
           #chr list
-          selectInput("my_chr", "chromosome", choices = chromosomes.df$names, selected = chromosomes.df$names[1]),
+          selectInput("my_chr", "chromosome", choices = NULL),
           
           #bin width list
-          selectInput("my_res", "bin width", choices = mcool.resolutions, selected =  mcool.resolutions[1]),
+          selectInput("my_res", "bin width", choices = NULL),
           
           #BUTTON to update input$start_end according to chr & bin_width (input$my_chr & input$my_res respectively)
           #actionButton("start_end_update", "Load datas"),
