@@ -10,10 +10,6 @@
 # Define UI for application that draws a histogram
 fluidPage(
 
-    # Application title
-    #titlePanel("HiC matrix"),
-    textOutput("txt_file"),
-
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
@@ -68,14 +64,45 @@ fluidPage(
           
         ),
 
-        # MATplot
+        ####################################################################
+        #MainPanel
+        ################################## 
         mainPanel(
           sliderInput("start_end","range:", 
                       min = 1, max =  2, 
                       value = c(1, 2), 
                       width = "100%", sep=",", post="bp"),
+          #TABset
+          tabsetPanel(type = "tabs",
+                      
+                      #MATplot
+                      tabPanel("MATplot", 
+                               
+                               # mcool path txt
+                               verbatimTextOutput("txt_mcoolfile"),
+                               
+                               #MATplot
+                               plotOutput("render_MATplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner()
+                               ),
+                      
+                      #mMATplot
+                      tabPanel("mMATplot", 
+                          
+                               #mcool file path
+                               shinyFiles::shinyFilesButton("Btn_GetFile2", "Choose second .mcool file (upper)" ,
+                                                            title = "Please select a mcool file:", multiple = FALSE,
+                                                            buttonType = "default", class = NULL),
+                               
+                               verbatimTextOutput("txt_mcoolfile2"),
+                               
+                               #reset domains files
+                               actionButton('unload', 'Unload second .mcool files'),
+                               
+                               plotOutput("render_mMATplot", width = "100%", height = "800px") %>% 
+                                 shinycssloaders::withSpinner())
+                      )
+                      
           
-          plotOutput("render_MATplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner()
         )
     )
 )

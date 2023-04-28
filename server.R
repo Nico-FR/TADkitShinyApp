@@ -26,7 +26,12 @@ function(input, output, session) {
     melted_subset = NULL,
     upperDom = NULL,
     lowerDom = NULL,
-    MATplot = NULL
+    MATplot = NULL,
+    mcool.path2 = NULL,
+    matrix2 = NULL,
+    subset_matrix2 = NULL,
+    melted_subset2 = NULL,
+    mMATplot = NULL
   )
   ##################################
   ##################################
@@ -34,18 +39,17 @@ function(input, output, session) {
   #select and read metadata of mcool file
   ##################################
   
-  root = c(wd='.') #getVolumes()
+  root = shinyFiles::getVolumes() #getVolumes() c(wd='.')
   observe({  
     shinyFiles::shinyFileChoose(input, "Btn_GetFile", roots = root, session = session, filetypes = c("", "mcool"))
   })
   observeEvent(input$Btn_GetFile, {
-    
+   
     #mcool path
     file_selected = shinyFiles::parseFilePaths(root, input$Btn_GetFile)
     if (nrow(file_selected)) {
       returns$mcool.path = as.character(file_selected$datapath)
-      output$txt_file <- renderText(returns$mcool.path)
-      observe(print(returns$mcool.path))
+      output$txt_mcoolfile <- renderText(returns$mcool.path)
       
       #bin_width.lst
       returns$bin_width.lst = (rhdf5::h5ls(returns$mcool.path) %>% filter(group == "/resolutions"))$name %>% 
@@ -158,12 +162,12 @@ function(input, output, session) {
     #melt matrix
     upper_mat = Matrix::summary(Matrix::triu(returns$subset_matrix, 1))
     diag_mat = data.frame(i = 1:nrow(returns$subset_matrix), j = 1:nrow(returns$subset_matrix), x = Matrix::diag(returns$subset_matrix))
-    lower_mat = Matrix::summary(Matrix::tril(BiocGenerics::t(returns$subset_matrix), -1)) #data.frame(i = upper_mat$j, j = upper_mat$i, x = upper_mat$x)
+    lower_mat = data.frame(i = upper_mat$j, j = upper_mat$i, x = upper_mat$x) #Matrix::summary(Matrix::tril(BiocGenerics::t(returns$subset_matrix), -1)) #data.frame(i = upper_mat$j, j = upper_mat$i, x = upper_mat$x)
     melted_mat = rbind(upper_mat, lower_mat, diag_mat)
     
     #add genomic coordinates
-    melted_mat$j = (melted_mat$j + returns$from - 1) * - returns$bin_width + returns$bin_width / 2
-    melted_mat$i = (melted_mat$i + returns$from - 1) * returns$bin_width - returns$bin_width / 2
+    melted_mat$j = (melted_mat$j + returns$from - 1) * returns$bin_width - returns$bin_width / 2
+    melted_mat$i = (melted_mat$i + returns$from - 1) * - returns$bin_width + returns$bin_width / 2
     
     #get log2
     if (input$my_log2) {melted_mat$x = log2(melted_mat$x)}
@@ -233,7 +237,7 @@ function(input, output, session) {
     validate(need(!is.null(returns$melted_subset), message = "loading matrix..."))
     
     #MATplot
-    returns$MATplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset, ggplot2::aes(x = i, y = j, fill = x))+
+    returns$MATplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset, ggplot2::aes(y = i, x = j, fill = x))+
       viridis::scale_fill_viridis(na.value = "black", option = "H")+
       ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
       ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
@@ -301,4 +305,148 @@ function(input, output, session) {
   ##################################
   ##################################
   ##################################
+  ####################################################################
+  #mcool2 file path 
+  ##################################
+  observe({  
+    shinyFiles::shinyFileChoose(input, "Btn_GetFile2", roots = root, session = session, filetypes = c("", "mcool"))
+  })
+
+  ##################################
+  ##################################
+  ##################################
+  ####################################################################
+  #unload second mcool files
+  ################################## 
+  observeEvent(input$unload, {
+    mcool.path2 = NULL
+    matrix2 = NULL
+    subset_matrix2 = NULL
+    melted_subset2 = NULL
+    mMATplot = NULL
+  })
+  observe(print(input$Btn_GetFile2))
+  ##################################
+  ##################################
+  ####################################################################
+  #load matrix2 
+  ##################################
+  observeEvent(list(input$Btn_GetFile2, input$my_balanced, input$my_chr, input$my_res), {
+    
+    
+    #mcool path
+    file_selected2 = shinyFiles::parseFilePaths(root, input$Btn_GetFile2)
+    
+    validate(need(nrow(file_selected2) > 0, message = "load the second matrix."))
+    returns$mcool.path2 = as.character(file_selected2$datapath)
+    output$txt_mcoolfile2 <- renderText(returns$mcool.path2)
+    
+    #message for loading matrix
+    showModal(modalDialog(
+      paste0("Loading of the second matrix."), 
+      footer=NULL))
+    
+    #load matrix
+    returns$matrix2 = cool2matrix(cool.path = returns$mcool.path2, chr = returns$chr_name, 
+                                  bin.width = returns$bin_width, balance = input$my_balanced)
+    
+    #close message
+    removeModal()
+  })
+  ####################################################################
+  #subset of the matrix when "matrix + from + to" are updated
+  ##################################
+  observeEvent(list(returns$from, returns$to, returns$matrix2), {
+    
+    #check correlation between chr and chr_size
+    validate(need(
+      input$start_end[1] <= returns$chr_size, "updating chr_size..." #if not wait that chr_size is updated
+    ))
+    validate(need(
+      input$start_end[2] <= returns$chr_size, "updating chr_size..." #if not wait that chr_size is updated
+    ))
+    validate(need(
+      !is.null(returns$matrix2), "waiting mcool..." 
+    ))
+    validate(need(
+      returns$chr_name == input$my_chr, "wainting loading matrix2..."
+    ))
+    
+    #filter matrix ranges
+    mat = Matrix::triu(returns$matrix2[returns$from:returns$to, returns$from:returns$to]) 
+    mat[Matrix::triu(mat == 0)] <- NA
+    returns$subset_matrix2 = mat
+    
+    #melt upper matrix
+    upper_mat = Matrix::summary(Matrix::triu(returns$subset_matrix2, 1))
+    lower_mat = Matrix::summary(Matrix::tril(BiocGenerics::t(returns$subset_matrix), -1)) 
+    
+    #merge melted upper and lower mat
+    melted_mat2 = rbind(upper_mat, lower_mat)
+    
+    #add genomic coordinates
+    melted_mat2$j = (melted_mat2$j + returns$from - 1) * returns$bin_width - returns$bin_width / 2
+    melted_mat2$i = (melted_mat2$i + returns$from - 1) * - returns$bin_width + returns$bin_width / 2
+    
+    #get log2
+    if (input$my_log2) {melted_mat2$x = log2(melted_mat2$x)}
+    returns$melted_subset2 = melted_mat2
+  })
+  ##################################
+  ##################################
+  ##################################
+  ####################################################################
+  #Plots if "melted_subset2 + upperDom + lowerDom" are updated
+  ################################## 
+  observeEvent(list(returns$melted_subset2, returns$upperDom, returns$lowerDom), {
+    
+    #check
+    validate(need(!is.null(returns$melted_subset2), message = "loading matrix..."))
+    validate(need(
+      returns$chr_name == input$my_chr, "wainting loading matrix2..."
+    ))
+    
+    #MATplot
+    returns$mMATplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset2, ggplot2::aes(y = i, i = j, fill = x))+
+      viridis::scale_fill_viridis(na.value = "black", option = "H")+
+      ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
+      ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
+      ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+
+      ggplot2::ggtitle(paste0(returns$chr_name, " (", format(returns$bin_width/1e3, scientific=F, big.mark=","),"kb)"))
+    
+    #upperDom
+    if (!is.null(returns$upperDom)) {
+      
+      #split Domains that are cut through the window
+      tad <- dplyr::filter(returns$upperDom, e > input$start_end[1], s < input$start_end[2])
+      tad$e2 <- ifelse(tad$e >= input$start_end[2], input$start_end[2], tad$e)
+      tad$s2 <- ifelse(tad$s <= input$start_end[1], input$start_end[1], tad$s)
+      
+      returns$mMATplot <- returns$mMATplot+
+        ggplot2::geom_segment(data = tad, ggplot2::aes(x = s, y = -s, xend = e2, yend = -s2), color = "red", size = 0.5)+
+        ggplot2::geom_segment(data = tad, ggplot2::aes(x = e2, y = -s2, xend = e, yend = -e), color = "red", size = 0.5)
+    }
+    
+    #lowerDom
+    if (!is.null(returns$lowerDom)) {
+      
+      #split Domains that are cut through the window
+      tad <- dplyr::filter(returns$lowerDom, e > input$start_end[1], s < input$start_end[2])
+      tad$e2 <- ifelse(tad$e >= input$start_end[2], input$start_end[2], tad$e)
+      tad$s2 <- ifelse(tad$s <= input$start_end[1], input$start_end[1], tad$s)
+      
+      returns$mMATplot <- returns$mMATplot+
+        ggplot2::geom_segment(data = tad, ggplot2::aes(x = s2, y = -e2, xend = e, yend = -e), color = "red", size = 0.5)+
+        ggplot2::geom_segment(data = tad, ggplot2::aes(x = s, y = -s, xend = s2, yend = -e2), color = "red", size = 0.5)
+    }
+  })
+  ##################################
+  ##################################
+  ##################################
+  ####################################################################
+  #renderPlot mMATplot
+  ################################## 
+  output$render_mMATplot <- renderPlot({
+    validate(need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
+    returns$mMATplot}) 
 }
