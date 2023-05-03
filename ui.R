@@ -111,7 +111,15 @@ fluidPage(
                                verbatimTextOutput("txt_mcoolfile2"),
                                
                                plotOutput("render_mMATplot", width = "100%", height = "800px") %>% 
-                                 shinycssloaders::withSpinner())
+                                 shinycssloaders::withSpinner()
+                               ),
+                      
+                      #TADplot
+                      tabPanel("TADplot", 
+
+                               #MATplot
+                               plotOutput("render_TADplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner()
+                      ),
                       )
                       
           
