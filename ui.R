@@ -32,7 +32,10 @@ fluidPage(
           hr(style="height:5px;background:#000000;"),
           
           #balanced box
-          checkboxInput("my_balanced", "balanced counts (weight)", value = FALSE),
+          checkboxInput("my_balanced", "balanced counts", value = FALSE),
+          
+          #scale colors
+          selectInput("balanced_name", "balancing type", choices = NULL),
           
           #log2 box
           checkboxInput("my_log2", "log2(counts)", value = TRUE),

@@ -19,6 +19,7 @@ function(input, output, session) {
     chr_name =  NULL,
     chr_size = NULL,
     bin_width =  NULL,
+    balanced_name = NULL,
     matrix = NULL,
     from = NULL,
     to = NULL,
@@ -68,15 +69,25 @@ function(input, output, session) {
                         max =  returns$chr.df$lengths[1],
                         value = c(1, returns$chr.df$lengths[1]),
                         step = returns$bin_width.lst[1])
+      
+      #balanced_name
+      tmp = as.data.frame(rhdf5::h5read(file = returns$mcool.path, name = paste0("resolutions/", returns$bin_width.lst[1],"/bins"))) %>% names
+      balanced_name.lst = tmp[!tmp %in% c("start", "end", "chrom")] 
+      returns$balanced_name = balanced_name.lst
+      updateSelectInput(session, "balanced_name", choices = returns$balanced_name, 
+                        selected = ifelse(match('weight', balanced_name.lst) %>% is.na, 
+                                          returns$balanced_name[1],
+                                          "weight") #add "weigth" by default (if it exists)
+                        )
     }
   })
 
   ##################################
   ##################################
   ####################################################################
-  #load matrix + from + to when chr, res & balanced changed
+  #load matrix + from + to when chr, res, balanced changed
   ##################################
-  observeEvent(list(returns$mcool.path, input$my_balanced, input$my_chr, input$my_res), {
+  observeEvent(list(returns$mcool.path, input$my_balanced, input$my_chr, input$my_res, input$balanced_name), {
     
     #updates metadatas (reactiveValues)
     returns$chr_name = input$my_chr
@@ -98,7 +109,8 @@ function(input, output, session) {
     
     #load matrix
     returns$matrix = cool2matrix(cool.path = returns$mcool.path, chr = returns$chr_name, 
-                                 bin.width = returns$bin_width, balance = input$my_balanced)
+                                 bin.width = returns$bin_width, balance = input$my_balanced,
+                                 balancing_name = input$balanced_name)
     
     #close message
     removeModal()
@@ -333,7 +345,7 @@ function(input, output, session) {
   ####################################################################
   #load matrix2 
   ##################################
-  observeEvent(list(input$Btn_GetFile2, input$my_balanced, input$my_chr, input$my_res), {
+  observeEvent(list(input$Btn_GetFile2, input$my_balanced, input$my_chr, input$my_res, input$balanced_name), {
     
     
     #mcool path
@@ -350,7 +362,8 @@ function(input, output, session) {
     
     #load matrix
     returns$matrix2 = cool2matrix(cool.path = returns$mcool.path2, chr = returns$chr_name, 
-                                  bin.width = returns$bin_width, balance = input$my_balanced)
+                                  bin.width = returns$bin_width, balance = input$my_balanced,
+                                  balancing_name = input$balanced_name)
     
     #close message
     removeModal()
