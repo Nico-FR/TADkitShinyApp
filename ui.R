@@ -22,17 +22,25 @@ fluidPage(
           #add horizontal line
           hr(style="height:5px;background:#000000;"),
           
+          #chr list
+          selectInput("my_chr", "chromosome", choices = NULL),
+          
+          #bin width list
+          selectInput("my_res", "bin width", choices = NULL),
+          
+          #add horizontal line
+          hr(style="height:5px;background:#000000;"),
+          
           #balanced box
           checkboxInput("my_balanced", "balanced counts (weight)", value = FALSE),
           
           #log2 box
           checkboxInput("my_log2", "log2(counts)", value = TRUE),
           
-          #chr list
-          selectInput("my_chr", "chromosome", choices = NULL),
-          
-          #bin width list
-          selectInput("my_res", "bin width", choices = NULL),
+          #scale colors
+          selectInput("scale_colors", "scale color",
+                      choices = c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo"), 
+                      selected = "turbo"),
           
           #BUTTON to update input$start_end according to chr & bin_width (input$my_chr & input$my_res respectively)
           #actionButton("start_end_update", "Load datas"),
@@ -60,7 +68,11 @@ fluidPage(
           hr(style="height:5px;background:#000000;"),
           
           #downloadplot
-          downloadButton("downloadPlot", label = "Download plot"),
+          downloadButton("download_MATplot", label = "MATplot"),
+          downloadButton("download_mMATplot", label = "mMATplot"),
+          
+          #clear session
+          actionButton("reload", "Clear session"),
           
         ),
 
@@ -94,9 +106,6 @@ fluidPage(
                                                             buttonType = "default", class = NULL),
                                
                                verbatimTextOutput("txt_mcoolfile2"),
-                               
-                               #reset domains files
-                               actionButton('unload', 'Unload second .mcool files'),
                                
                                plotOutput("render_mMATplot", width = "100%", height = "800px") %>% 
                                  shinycssloaders::withSpinner())

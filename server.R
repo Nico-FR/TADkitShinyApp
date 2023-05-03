@@ -231,14 +231,14 @@ function(input, output, session) {
   ####################################################################
   #Plots if "melted_subset + upperDom + lowerDom" are updated
   ################################## 
-  observeEvent(list(returns$melted_subset, returns$upperDom, returns$lowerDom), {
+  observeEvent(list(returns$melted_subset, returns$upperDom, returns$lowerDom, input$scale_colors), {
     
     #check
     validate(need(!is.null(returns$melted_subset), message = "loading matrix..."))
     
     #MATplot
     returns$MATplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset, ggplot2::aes(y = i, x = j, fill = x))+
-      viridis::scale_fill_viridis(na.value = "black", option = "H")+
+      viridis::scale_fill_viridis(na.value = "black", option = input$scale_colors)+
       ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
       ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
       ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+
@@ -295,11 +295,18 @@ function(input, output, session) {
   ####################################################################
   #download plot
   ################################## 
-  output$downloadPlot <- downloadHandler(
+  output$download_MATplot <- downloadHandler(
     filename = function() {
       paste0(returns$chr_name, "_", input$my_res, "_", input$start_end[1], "-", input$start_end[2],".png")},
     content = function(file) {
       ggplot2::ggsave(file, plot = returns$MATplot, device = "png")
+    }
+  )
+  output$download_mMATplot <- downloadHandler(
+    filename = function() {
+      paste0(returns$chr_name, "_", input$my_res, "_", input$start_end[1], "-", input$start_end[2],".png")},
+    content = function(file) {
+      ggplot2::ggsave(file, plot = returns$mMATplot, device = "png")
     }
   )
   ##################################
@@ -318,14 +325,9 @@ function(input, output, session) {
   ####################################################################
   #unload second mcool files
   ################################## 
-  observeEvent(input$unload, {
-    mcool.path2 = NULL
-    matrix2 = NULL
-    subset_matrix2 = NULL
-    melted_subset2 = NULL
-    mMATplot = NULL
+  observeEvent(input$reload, {
+    session$reload()
   })
-  observe(print(input$Btn_GetFile2))
   ##################################
   ##################################
   ####################################################################
@@ -354,7 +356,7 @@ function(input, output, session) {
     removeModal()
   })
   ####################################################################
-  #subset of the matrix when "matrix + from + to" are updated
+  #subset of matrix2 when "matrix2 + from + to" are updated
   ##################################
   observeEvent(list(returns$from, returns$to, returns$matrix2), {
     
@@ -398,17 +400,17 @@ function(input, output, session) {
   ####################################################################
   #Plots if "melted_subset2 + upperDom + lowerDom" are updated
   ################################## 
-  observeEvent(list(returns$melted_subset2, returns$upperDom, returns$lowerDom), {
+  observeEvent(list(returns$melted_subset2, returns$upperDom, returns$lowerDom, input$scale_colors), {
     
     #check
     validate(need(!is.null(returns$melted_subset2), message = "loading matrix..."))
     validate(need(
-      returns$chr_name == input$my_chr, "wainting loading matrix2..."
+      returns$chr_name == input$my_chr, "waiting matrix2..."
     ))
     
     #MATplot
-    returns$mMATplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset2, ggplot2::aes(y = i, i = j, fill = x))+
-      viridis::scale_fill_viridis(na.value = "black", option = "H")+
+    returns$mMATplot <- ggplot2::ggplot()+ggplot2::geom_tile(data = returns$melted_subset2, ggplot2::aes(y = i, x = j, fill = x))+
+      viridis::scale_fill_viridis(na.value = "black", option = input$scale_colors)+
       ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
       ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
       ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+
