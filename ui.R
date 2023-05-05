@@ -14,10 +14,19 @@ fluidPage(
     sidebarLayout(
         sidebarPanel(
           
-          #mcool file path
-          shinyFiles::shinyFilesButton("Btn_GetFile", "Choose .mcool file" ,
-                           title = "Please select a mcool file:", multiple = FALSE,
-                           buttonType = "default", class = NULL),
+          conditionalPanel(condition = "input.tabselected==1",
+                           #mcool file path
+                           shinyFiles::shinyFilesButton("Btn_GetFile", "Choose .mcool file" ,
+                                                        title = "Please select a mcool file:", multiple = FALSE,
+                                                        buttonType = "default", class = NULL)
+                           ),
+          conditionalPanel(condition = "input.tabselected==2",
+                           #mcool file path
+                           #mcool file path
+                           shinyFiles::shinyFilesButton("Btn_GetFile2", "Choose 2nd .mcool file (upper)" ,
+                                                        title = "Please select a mcool file:", multiple = FALSE,
+                                                        buttonType = "default", class = NULL)
+          ),
         
           #add horizontal line
           hr(style="height:5px;background:#000000;"),
@@ -44,10 +53,7 @@ fluidPage(
           selectInput("scale_colors", "scale color",
                       choices = c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo"), 
                       selected = "turbo"),
-          
-          #BUTTON to update input$start_end according to chr & bin_width (input$my_chr & input$my_res respectively)
-          #actionButton("start_end_update", "Load datas"),
-          
+
           #add horizontal line
           hr(style="height:5px;background:#000000;"),
           
@@ -91,7 +97,7 @@ fluidPage(
           tabsetPanel(type = "tabs",
                       
                       #MATplot
-                      tabPanel("MATplot", 
+                      tabPanel("MATplot", value = 1,
                                
                                # mcool path txt
                                verbatimTextOutput("txt_mcoolfile"),
@@ -101,17 +107,13 @@ fluidPage(
                                ),
                       
                       #mMATplot
-                      tabPanel("mMATplot", 
+                      tabPanel("mMATplot", value = 2,
                           
-                               #mcool file path
-                               shinyFiles::shinyFilesButton("Btn_GetFile2", "Choose second .mcool file (upper)" ,
-                                                            title = "Please select a mcool file:", multiple = FALSE,
-                                                            buttonType = "default", class = NULL),
-                               
                                verbatimTextOutput("txt_mcoolfile2"),
                                
                                plotOutput("render_mMATplot", width = "100%", height = "800px") %>% 
-                                 shinycssloaders::withSpinner())
+                                 shinycssloaders::withSpinner()),
+                      id = "tabselected"
                       )
                       
           
