@@ -44,7 +44,7 @@ function(input, output, session) {
   observe({  
     shinyFiles::shinyFileChoose(input, "Btn_GetFile", roots = root, session = session, filetypes = c("", "mcool"))
   })
-  observeEvent(input$Btn_GetFile, {
+  observeEvent(list(input$Btn_GetFile, input$Btn_GetFile2), {
    
     #mcool path
     file_selected = shinyFiles::parseFilePaths(root, input$Btn_GetFile)
@@ -104,7 +104,7 @@ function(input, output, session) {
     showModal(modalDialog(
       paste0("Loading of ", returns$chr_name," matrix at ", 
              format(returns$bin_width/1e3, scientific=F, big.mark=","), 
-             "kb. (i.e. ", nb_bin, "x",  nb_bin, " matrix)."), 
+             "kb. (i.e. ", nb_bin, "x",  nb_bin, " bins)."), 
       footer=NULL))
     
     #load matrix
