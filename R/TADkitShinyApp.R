@@ -4,7 +4,7 @@
 #' @import rhdf5
 #' @importFrom methods as
 #' @importFrom magrittr %>%
-#' @import BiocGenerics
+#' @importFrom BiocGenerics t
 #' @import shinyFiles
 #' @import shinycssloaders
 #' @import viridis
