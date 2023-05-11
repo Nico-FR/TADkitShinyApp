@@ -5,7 +5,7 @@ library(rhdf5)
 #set all dataframes names (ie columns) as NULL (to avoid warnings: "no visible binding for global variable")
 chr <- chrom <- e <- e2 <- group <- i <- j <- s <- s2 <- x <- NULL
 
-TADkitShinyApp <- function() {
+shinyApp(
   ui <- shiny::fluidPage(
     
     # Sidebar with a slider input for number of bins
@@ -583,6 +583,5 @@ TADkitShinyApp <- function() {
       returns$mMATplot}) 
   }
   
-  shiny::shinyApp(ui, server)
-}
+)
 
