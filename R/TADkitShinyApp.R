@@ -1,9 +1,4 @@
-library(shiny)
-library(dplyr)
-library(rhdf5)
 
-#set all dataframes names (ie columns) as NULL (to avoid warnings: "no visible binding for global variable")
-chr <- chrom <- e <- e2 <- group <- i <- j <- s <- s2 <- x <- NULL
 
 TADkitShinyApp <- function() {
   ui <- shiny::fluidPage(
@@ -415,7 +410,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #renderPlot
     ################################## 
-    output$render_MATplot <- shiny::renderPlot({
+    output$render_MATplot <- renderPlot({
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
       returns$MATplot}) 
     ##################################
@@ -578,7 +573,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #renderPlot mMATplot
     ################################## 
-    output$render_mMATplot <- shiny::renderPlot({
+    output$render_mMATplot <- renderPlot({
       shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
       returns$mMATplot}) 
   }
