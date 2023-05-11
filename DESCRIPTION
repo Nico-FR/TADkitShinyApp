@@ -1,6 +1,6 @@
 Package: TADkitShinyApp
 Title: Application to plot HiC matrices from mcool files
-Version: 0.0.0.9000
+Version: 0.0.0.9900
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
