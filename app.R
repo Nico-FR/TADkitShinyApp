@@ -122,7 +122,7 @@ shinyApp(
         
       )
     )
-  )
+  ),
   
   server <- function(input, output, session) {
     
