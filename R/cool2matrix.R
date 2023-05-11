@@ -20,11 +20,14 @@
 #' @importFrom rhdf5 h5read
 #' @importFrom methods as
 #' @importFrom magrittr %>%
+#' @importFrom dplyr filter
 #'
 #' @export
 #'
 #'
 cool2matrix <- function(cool.path, chr, bin.width = NA, balance = FALSE, balancing_name = "weight") {
+  
+  group <- chrom <- NULL
   
   if (!is.na(bin.width)) {message("\nParsing .mcool file.")} else {message("\nParsing .cool file.")}
   
@@ -43,7 +46,7 @@ cool2matrix <- function(cool.path, chr, bin.width = NA, balance = FALSE, balanci
   
   if (!is.na(bin.width)) {
     #available resolutions
-    ar = (rhdf5::h5ls(cool.path) %>% filter(group == "/resolutions"))$name
+    ar = (rhdf5::h5ls(cool.path) %>% dplyr::filter(group == "/resolutions"))$name
     
     #if bin.width not available
     if (is.na(match(bin.width, as.numeric(ar)))) {
@@ -59,7 +62,7 @@ cool2matrix <- function(cool.path, chr, bin.width = NA, balance = FALSE, balanci
   }
   
   # the list of available normalisation names
-  tmp = as.data.frame(rhdf5::h5read(file = cool.path, name = uri("bins/"))) %>% filter(chrom == chr) %>% names
+  tmp = as.data.frame(rhdf5::h5read(file = cool.path, name = uri("bins/"))) %>% dplyr::filter(chrom == chr) %>% names
   an = tmp[!tmp %in% c("start", "end", "chrom")]
   if (!(balancing_name %in% an)) {
     stop("\n '", balancing_name, "' normalisation is not available.", "\nNormalisations available are: ", paste0(an, collapse = ", "), ".")
@@ -110,7 +113,7 @@ cool2matrix <- function(cool.path, chr, bin.width = NA, balance = FALSE, balanci
   if (balance) {
     message("\nBalancing")
     # Fetch the weights corresponding to the chromosome
-    bins <- as.data.frame(rhdf5::h5read(file = cool.path, name = uri("bins/"))) %>% filter(chrom == chr)
+    bins <- as.data.frame(rhdf5::h5read(file = cool.path, name = uri("bins/"))) %>% dplyr::filter(chrom == chr)
     w = bins[,balancing_name]
     #upper matrix weight for balancing
     mat_weight = Matrix::triu((w %*% t(w)))

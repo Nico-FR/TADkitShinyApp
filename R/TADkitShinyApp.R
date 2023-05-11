@@ -1,6 +1,26 @@
+#' @title shiny application to plot matrices
+#'
+#' @import shiny
+#' @import rhdf5
+#' @importFrom methods as
+#' @importFrom magrittr %>%
+#' @import BiocGenerics
+#' @import shinyFiles
+#' @import shinycssloaders
+#' @import viridis
+#' @import ggplot2
+#' @import Matrix
+#' @import dplyr
+#' 
+#'
+#' @export
 
 
 TADkitShinyApp <- function() {
+  
+  #set all dataframes names (ie columns) as NULL (to avoid warnings: "no visible binding for global variable")
+  chr <- chrom <- e <- e2 <- group <- i <- j <- s <- s2 <- x <- NULL
+  
   ui <- shiny::fluidPage(
     
     # Sidebar with a slider input for number of bins
@@ -410,7 +430,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #renderPlot
     ################################## 
-    output$render_MATplot <- renderPlot({
+    output$render_MATplot <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
       returns$MATplot}) 
     ##################################
@@ -573,7 +593,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #renderPlot mMATplot
     ################################## 
-    output$render_mMATplot <- renderPlot({
+    output$render_mMATplot <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
       returns$mMATplot}) 
   }
