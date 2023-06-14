@@ -1,9 +1,8 @@
 Package: TADkitShinyApp
 Title: Application to plot HiC matrices from mcool files
-Version: 0.0.1.0000
+Version: 0.0.1.1000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Nicolas", "MARY", , "nicolas.mary@envt.fr", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-7304-5555 "))
 Description: This Shiny application allow to plot matrices with domains through a graphical interface (i.e does not require any knowledge of R) with matrix datas stored in a mcool file format. This application takes over the function MATplot and mMATplot from TADkit package to plot matrices. For more possibilities use the TADkit package available from GitHub (`devtools::install_github("Nico-FR/TADkit")`).
 License: MIT + file LICENSE
 Encoding: UTF-8
