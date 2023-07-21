@@ -22,5 +22,6 @@ Imports:
     viridis,
     methods,
     magrittr,
-    utils
+    utils,
+    tidyr
     
