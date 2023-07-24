@@ -124,7 +124,7 @@ TADkitShinyApp <- function() {
                     
                     #MATplot
                     shiny::tabPanel("MATplot", value = 1,
-                             
+                                    
                              # mcool path txt
                              shiny::verbatimTextOutput("txt_mcoolfile"),
                              
@@ -133,18 +133,18 @@ TADkitShinyApp <- function() {
                              
                              #BGplot1
                              shiny::plotOutput("render_BGplot1", width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
-                             
-                             # bedgraphs path txt
-                             shiny::verbatimTextOutput("txt_bedgraphs.paths"),
+                            
                     ),
                     
                     #mMATplot
                     shiny::tabPanel("mMATplot", value = 2,
-                             
+                                    
                                     shiny::verbatimTextOutput("txt_mcoolfile2"),
                              
-                                    shiny::plotOutput("render_mMATplot", width = "100%", height = "800px") %>% 
-                                      shinycssloaders::withSpinner()),
+                                    shiny::plotOutput("render_mMATplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner(),
+                                    
+                                    shiny::plotOutput("render_BGplot2", width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
+                                    ),
                     id = "tabselected"
         )
         
@@ -179,7 +179,7 @@ TADkitShinyApp <- function() {
       subset_matrix2 = NULL,
       melted_subset2 = NULL,
       mMATplot = NULL,
-      bedgraphs.path = NULL,
+      bedgraph.df = NULL,
       BGplot1 = NULL
     )
     ##################################
@@ -644,7 +644,6 @@ TADkitShinyApp <- function() {
       
       #add names to bedgraphs list
       names(bedgraphs.df) = sapply(1:length(bedgraphs.path), function(i){(strsplit(bedgraphs.path[[i]], "\\/")[[1]] %>% rev)[1]})
-      output$txt_bedgraphs.paths <- shiny::renderText(names(bedgraphs.df))
       
       for (c in names(bedgraphs.df)) {
         names(bedgraphs.df[[c]]) = c("seqnames", "start", "end", c)
@@ -676,8 +675,12 @@ TADkitShinyApp <- function() {
     ################################## 
     output$render_BGplot1 <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
-      shiny::validate(shiny::need(!is.null(returns$BGplot1), message = "waiting BGplot1"))
+      shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
       returns$BGplot1}) 
+    output$render_BGplot2 <- shiny::renderPlot({
+      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
+      shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
+      returns$BGplot1})
 
   }
   
