@@ -67,6 +67,9 @@ TADkitShinyApp <- function() {
                                choices = c("magma", "inferno", "plasma", "viridis", "cividis", "rocket", "mako", "turbo"), 
                                selected = "turbo"),
                    
+                   #plot size
+                   numericInput("width", "plot size:", 800, min = 100, max = 8000, step = 100),
+                   
                    #add horizontal line
                    shiny::hr(style="height:5px;background:#000000;"),
                    
@@ -95,9 +98,8 @@ TADkitShinyApp <- function() {
                                                 buttonType = "default", class = NULL),
                    
                    #begraphs offset
-                   numericInput("left_offset", "left offset:", 0.2, min = -1, max = 4, step = 0.01),
-                   numericInput("right_offset", "right offset:", 0.2, min = -1, max = 4, step = 0.01),
-                   #numericInput("width", "width:", 800, min = 10, max = 2000, step = 10),
+                   numericInput("left_offset", "left offset:", 0.07, min = -1, max = 4, step = 0.01),
+                   #numericInput("right_offset", "right offset:", 0.2, min = -1, max = 4, step = 0.01),
                    
                    #add horizontal line
                    shiny::hr(style="height:5px;background:#000000;"),
@@ -134,21 +136,21 @@ TADkitShinyApp <- function() {
                              shiny::verbatimTextOutput("txt_mcoolfile"),
                              
                              #MATplot
-                             shiny::plotOutput("render_MATplot", width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
+                             shiny::plotOutput("render_MATplot", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                              
                              #BGplot1
-                             shiny::plotOutput("render_BGplot1", width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
+                             shiny::plotOutput("render_BGplot1", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
                             
                     ),
                     
                     #mMATplot
-                    shiny::tabPanel("mMATplot", value = 2,
+                    shiny::tabPanel("mMATplot", value = 2, align = "center",
                                     
                                     shiny::verbatimTextOutput("txt_mcoolfile2"),
                              
-                                    shiny::plotOutput("render_mMATplot", width = "100%", height = "800px") %>% shinycssloaders::withSpinner(),
+                                    shiny::plotOutput("render_mMATplot", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                                     
-                                    shiny::plotOutput("render_BGplot2", width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
+                                    shiny::plotOutput("render_BGplot2", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                                     ),
                     id = "tabselected"
         )
@@ -187,6 +189,9 @@ TADkitShinyApp <- function() {
       bedgraph.df = NULL,
       BGplot1 = NULL
     )
+    widthSize <- function() {
+      input$width
+    }
     ##################################
     ##################################
     ####################################################################
@@ -406,7 +411,7 @@ TADkitShinyApp <- function() {
         viridis::scale_fill_viridis(na.value = "black", option = input$scale_colors)+
         ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
         ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
-        ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+ #, legend.position="top"
+        ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank(), legend.position="top")+
         ggplot2::ggtitle(paste0(returns$chr_name, " (", format(returns$bin_width/1e3, scientific=F, big.mark=","),"kb)"))
       
       #upperDom
@@ -453,7 +458,7 @@ TADkitShinyApp <- function() {
     ################################## 
     output$render_MATplot <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
-      returns$MATplot}) 
+      returns$MATplot}, width = widthSize, height = widthSize) 
     ##################################
     ##################################
     ##################################
@@ -579,7 +584,7 @@ TADkitShinyApp <- function() {
         viridis::scale_fill_viridis(na.value = "black", option = input$scale_colors)+
         ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
         ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
-        ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+
+        ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank(), legend.position = "top")+
         ggplot2::ggtitle(paste0(returns$chr_name, " (", format(returns$bin_width/1e3, scientific=F, big.mark=","),"kb)"))
       
       #upperDom
@@ -616,7 +621,7 @@ TADkitShinyApp <- function() {
     ################################## 
     output$render_mMATplot <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
-      returns$mMATplot})
+      returns$mMATplot}, width = widthSize, height = widthSize)
     ##################################
     ##################################
     ##################################
@@ -672,23 +677,23 @@ TADkitShinyApp <- function() {
       
       #MATplot
       returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph.df, ggplot2::aes(y = score, x = bp, color = sample))+
-        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset,input$right_offset)))+ #
+        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
     ################################## 
     #renderPlot
     ################################## 
-    #widthSize <- function() {input$width}
+    
     
     output$render_BGplot1 <- shiny::renderPlot({
       
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
       shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
-      returns$BGplot1}) #, width = widthSize, height = 300
+      returns$BGplot1}, width = widthSize, height = 300) 
     output$render_BGplot2 <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
       shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
-      returns$BGplot1})
+      returns$BGplot1}, width = widthSize, height = 300)
 
   }
   
