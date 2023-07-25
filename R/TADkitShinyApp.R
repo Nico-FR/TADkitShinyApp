@@ -672,7 +672,7 @@ TADkitShinyApp <- function() {
       #merge bedgraphs
       bedgraph1.df = bedgraphs1.df %>% 
         Reduce(function(...) dplyr::full_join(..., by = c("seqnames", "start", "end")), .) %>% 
-        mutate(bp = (start + end) / 2) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs1.df))
+        mutate(bp = start) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs1.df)) %>% filter(!is.na(score))
         
       returns$bedgraph1.df = bedgraph1.df
     })
@@ -686,7 +686,7 @@ TADkitShinyApp <- function() {
       shiny::validate(shiny::need(!is.null(returns$bedgraph1.df), message = "loading bedgraphs..."))
       
       #MATplot
-      returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph1.df, ggplot2::aes(y = score, x = bp, color = sample))+
+      returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_step(data = returns$bedgraph1.df, ggplot2::aes(y = score, x = bp, color = sample))+
         ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
@@ -727,7 +727,7 @@ TADkitShinyApp <- function() {
       #merge bedgraphs
       bedgraph2.df = bedgraphs2.df %>% 
         Reduce(function(...) dplyr::full_join(..., by = c("seqnames", "start", "end")), .) %>% 
-        mutate(bp = (start + end) / 2) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs2.df))
+        mutate(bp = start) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs2.df)) %>% filter(!is.na(score))
       
       returns$bedgraph2.df = bedgraph2.df
     })
@@ -741,7 +741,7 @@ TADkitShinyApp <- function() {
       shiny::validate(shiny::need(!is.null(returns$bedgraph2.df), message = "loading bedgraphs..."))
       
       #MATplot
-      returns$BGplot2 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph2.df, ggplot2::aes(y = score, x = bp, color = sample))+
+      returns$BGplot2 <- ggplot2::ggplot()+ggplot2::geom_step(data = returns$bedgraph2.df, ggplot2::aes(y = score, x = bp, color = sample))+
         ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
