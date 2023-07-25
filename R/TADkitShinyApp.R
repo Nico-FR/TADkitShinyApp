@@ -94,6 +94,11 @@ TADkitShinyApp <- function() {
                                                 title = "Please select a bedgraph files:", multiple = TRUE,
                                                 buttonType = "default", class = NULL),
                    
+                   #begraphs offset
+                   numericInput("left_offset", "left offset:", 0.2, min = -1, max = 4, step = 0.01),
+                   numericInput("right_offset", "right offset:", 0.2, min = -1, max = 4, step = 0.01),
+                   #numericInput("width", "width:", 800, min = 10, max = 2000, step = 10),
+                   
                    #add horizontal line
                    shiny::hr(style="height:5px;background:#000000;"),
                    
@@ -123,7 +128,7 @@ TADkitShinyApp <- function() {
         shiny::tabsetPanel(type = "tabs",
                     
                     #MATplot
-                    shiny::tabPanel("MATplot", value = 1,
+                    shiny::tabPanel("MATplot", value = 1, align = "center",
                                     
                              # mcool path txt
                              shiny::verbatimTextOutput("txt_mcoolfile"),
@@ -401,7 +406,7 @@ TADkitShinyApp <- function() {
         viridis::scale_fill_viridis(na.value = "black", option = input$scale_colors)+
         ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
         ggplot2::scale_y_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(-input$start_end[2], -input$start_end[1]))+
-        ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+
+        ggplot2::coord_fixed()+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+ #, legend.position="top"
         ggplot2::ggtitle(paste0(returns$chr_name, " (", format(returns$bin_width/1e3, scientific=F, big.mark=","),"kb)"))
       
       #upperDom
@@ -476,7 +481,7 @@ TADkitShinyApp <- function() {
     #mcool2 file path 
     ##################################
     shiny::observe({  
-      shinyFiles::shinyFileChoose(input, "Btn_GetFile2", roots = root, session = session, filetypes = c("", "mcool"))
+      shinyFiles::shinyFileChoose(input, "Btn_GetFile2", roots = root, defaultPath = returns$mcool.path, session = session, filetypes = c("", "mcool"))
     })
     
     ##################################
@@ -619,7 +624,7 @@ TADkitShinyApp <- function() {
     #bedgraphs
     ################################## 
     shiny::observe({  
-      shinyFiles::shinyFileChoose(input, "bedgraphs", roots = root, session = session)
+      shinyFiles::shinyFileChoose(input, "bedgraphs", roots = root, defaultPath = returns$mcool.path, session = session)
     })
     
     shiny::observeEvent(list(input$bedgraphs, returns$chr_name), {
@@ -660,23 +665,26 @@ TADkitShinyApp <- function() {
     ####################################################################
     #Bedgraph Plot if "returns$bedgraph.df", "from", "to" are updated
     ################################## 
-    shiny::observeEvent(list(returns$bedgraph.df, returns$from, returns$to), {
+    shiny::observeEvent(list(returns$bedgraph.df, returns$from, returns$to, input$left_offset, input$right_offset), {
       
       #check
       shiny::validate(shiny::need(!is.null(returns$bedgraph.df), message = "loading bedgraphs..."))
       
       #MATplot
       returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph.df, ggplot2::aes(y = score, x = bp, color = sample))+
-        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]))+
+        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset,input$right_offset)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
     ################################## 
     #renderPlot
     ################################## 
+    #widthSize <- function() {input$width}
+    
     output$render_BGplot1 <- shiny::renderPlot({
+      
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
       shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
-      returns$BGplot1}) 
+      returns$BGplot1}) #, width = widthSize, height = 300
     output$render_BGplot2 <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
       shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
