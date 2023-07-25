@@ -93,7 +93,10 @@ TADkitShinyApp <- function() {
                    shiny::hr(style="height:5px;background:#000000;"),
                    
                    #bedgraphs
-                   shinyFiles::shinyFilesButton("bedgraphs", "Choose .bedgraph files" ,
+                   shinyFiles::shinyFilesButton("bedgraphs1", "Choose .bedgraph files set 1" ,
+                                                title = "Please select a bedgraph files:", multiple = TRUE,
+                                                buttonType = "default", class = NULL),
+                   shinyFiles::shinyFilesButton("bedgraphs2", "Choose .bedgraph files set 2" ,
                                                 title = "Please select a bedgraph files:", multiple = TRUE,
                                                 buttonType = "default", class = NULL),
                    
@@ -140,6 +143,9 @@ TADkitShinyApp <- function() {
                              
                              #BGplot1
                              shiny::plotOutput("render_BGplot1", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
+                             
+                             #BGplot2
+                             shiny::plotOutput("render_BGplot2", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
                             
                     ),
                     
@@ -150,7 +156,9 @@ TADkitShinyApp <- function() {
                              
                                     shiny::plotOutput("render_mMATplot", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                                     
-                                    shiny::plotOutput("render_BGplot2", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
+                                    shiny::plotOutput("render_BGplot1B", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
+                                    
+                                    shiny::plotOutput("render_BGplot2B", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                                     ),
                     id = "tabselected"
         )
@@ -186,8 +194,10 @@ TADkitShinyApp <- function() {
       subset_matrix2 = NULL,
       melted_subset2 = NULL,
       mMATplot = NULL,
-      bedgraph.df = NULL,
-      BGplot1 = NULL
+      bedgraph1.df = NULL,
+      BGplot1 = NULL,
+      bedgraph2.df = NULL,
+      BGplot2 = NULL
     )
     widthSize <- function() {
       input$width
@@ -457,7 +467,7 @@ TADkitShinyApp <- function() {
     #renderPlot
     ################################## 
     output$render_MATplot <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
+      shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file to plot a symetrical matrix"))
       returns$MATplot}, width = widthSize, height = widthSize) 
     ##################################
     ##################################
@@ -620,63 +630,118 @@ TADkitShinyApp <- function() {
     #renderPlot mMATplot
     ################################## 
     output$render_mMATplot <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
+      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file to plot on the upper part of the matrix"))
       returns$mMATplot}, width = widthSize, height = widthSize)
     ##################################
     ##################################
     ##################################
     ####################################################################
-    #bedgraphs
+    #bedgraphs set 1
     ################################## 
     shiny::observe({  
-      shinyFiles::shinyFileChoose(input, "bedgraphs", roots = root, defaultPath = returns$mcool.path, session = session)
+      shinyFiles::shinyFileChoose(input, "bedgraphs1", roots = root, defaultPath = returns$mcool.path, session = session)
     })
     
-    shiny::observeEvent(list(input$bedgraphs, returns$chr_name), {
+    shiny::observeEvent(list(input$bedgraphs1, returns$chr_name), {
       
       #bedgraphs paths
-      file_selected3 = shinyFiles::parseFilePaths(root, input$bedgraphs)
-      bedgraphs.path = as.character(file_selected3$datapath)
+      file_selected3 = shinyFiles::parseFilePaths(root, input$bedgraphs1)
+      bedgraphs1.path = as.character(file_selected3$datapath)
       shiny::validate(shiny::need(nrow(file_selected3) > 0, message = "choose bedgraph file."))
       #shiny::validate(shiny::need(!is.null(input$chr), message = "waiting chr input."))
       
       #read badgraphs and filter chr
-      bedgraphs.df = lapply(bedgraphs.path, function(x) {
+      bedgraphs1.df = lapply(bedgraphs1.path, function(x) {
         utils::read.table(x, header = FALSE, sep = "\t")[,1:4] %>% dplyr::filter(V1 == 1)}) #change 1 by input$chr
       
       #check input file
       shiny::validate(
-        shiny::need(length(bedgraphs.df[[1]]) >= 4, message = "Please upload bedgraph file format (no header, tab separated)"))
+        shiny::need(length(bedgraphs1.df[[1]]) >= 4, message = "Please upload bedgraph file format (no header, tab separated)"))
       shiny::validate(
-        shiny::need(is.numeric(bedgraphs.df[[1]][,2]), message = "Column 2 is not numeric"),
-        shiny::need(is.numeric(bedgraphs.df[[1]][,3]), message = "Column 3 is not numeric"),
-        shiny::need(is.numeric(bedgraphs.df[[1]][,4]), message = "Column 4 is not numeric"))
+        shiny::need(is.numeric(bedgraphs1.df[[1]][,2]), message = "Column 2 is not numeric"),
+        shiny::need(is.numeric(bedgraphs1.df[[1]][,3]), message = "Column 3 is not numeric"),
+        shiny::need(is.numeric(bedgraphs1.df[[1]][,4]), message = "Column 4 is not numeric"))
       
       #add names to bedgraphs list
-      names(bedgraphs.df) = sapply(1:length(bedgraphs.path), function(i){(strsplit(bedgraphs.path[[i]], "\\/")[[1]] %>% rev)[1]})
+      names(bedgraphs1.df) = sapply(1:length(bedgraphs1.path), function(i){(strsplit(bedgraphs1.path[[i]], "\\/")[[1]] %>% rev)[1]})
       
-      for (c in names(bedgraphs.df)) {
-        names(bedgraphs.df[[c]]) = c("seqnames", "start", "end", c)
+      for (c in names(bedgraphs1.df)) {
+        names(bedgraphs1.df[[c]]) = c("seqnames", "start", "end", c)
       }
       
       #merge bedgraphs
-      bedgraph.df = bedgraphs.df %>% 
+      bedgraph1.df = bedgraphs1.df %>% 
         Reduce(function(...) dplyr::full_join(..., by = c("seqnames", "start", "end")), .) %>% 
-        mutate(bp = (start + end) / 2) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs.df))
+        mutate(bp = (start + end) / 2) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs1.df))
         
-      returns$bedgraph.df = bedgraph.df
+      returns$bedgraph1.df = bedgraph1.df
     })
     
     ####################################################################
     #Bedgraph Plot if "returns$bedgraph.df", "from", "to" are updated
     ################################## 
-    shiny::observeEvent(list(returns$bedgraph.df, returns$from, returns$to, input$left_offset, input$right_offset), {
+    shiny::observeEvent(list(returns$bedgraph1.df, returns$from, returns$to, input$left_offset), {
       
       #check
-      shiny::validate(shiny::need(!is.null(returns$bedgraph.df), message = "loading bedgraphs..."))
+      shiny::validate(shiny::need(!is.null(returns$bedgraph1.df), message = "loading bedgraphs..."))
       
       #MATplot
-      returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph.df, ggplot2::aes(y = score, x = bp, color = sample))+
+      returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph1.df, ggplot2::aes(y = score, x = bp, color = sample))+
+        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset, 0.05)))+ #
+        theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
+    })
+    ####################################################################
+    #bedgraphs set 2
+    ################################## 
+    shiny::observe({  
+      shinyFiles::shinyFileChoose(input, "bedgraphs2", roots = root, defaultPath = returns$mcool.path, session = session)
+    })
+    
+    shiny::observeEvent(list(input$bedgraphs2, returns$chr_name), {
+      
+      #bedgraphs paths
+      file_selected4 = shinyFiles::parseFilePaths(root, input$bedgraphs2)
+      bedgraphs2.path = as.character(file_selected4$datapath)
+      shiny::validate(shiny::need(nrow(file_selected4) > 0, message = "choose bedgraph file."))
+      #shiny::validate(shiny::need(!is.null(input$chr), message = "waiting chr input."))
+      
+      #read badgraphs and filter chr
+      bedgraphs2.df = lapply(bedgraphs2.path, function(x) {
+        utils::read.table(x, header = FALSE, sep = "\t")[,1:4] %>% dplyr::filter(V1 == 1)}) #change 1 by input$chr
+      
+      #check input file
+      shiny::validate(
+        shiny::need(length(bedgraphs2.df[[1]]) >= 4, message = "Please upload bedgraph file format (no header, tab separated)"))
+      shiny::validate(
+        shiny::need(is.numeric(bedgraphs2.df[[1]][,2]), message = "Column 2 is not numeric"),
+        shiny::need(is.numeric(bedgraphs2.df[[1]][,3]), message = "Column 3 is not numeric"),
+        shiny::need(is.numeric(bedgraphs2.df[[1]][,4]), message = "Column 4 is not numeric"))
+      
+      #add names to bedgraphs list
+      names(bedgraphs2.df) = sapply(1:length(bedgraphs2.path), function(i){(strsplit(bedgraphs2.path[[i]], "\\/")[[1]] %>% rev)[1]})
+      
+      for (c in names(bedgraphs2.df)) {
+        names(bedgraphs2.df[[c]]) = c("seqnames", "start", "end", c)
+      }
+      
+      #merge bedgraphs
+      bedgraph2.df = bedgraphs2.df %>% 
+        Reduce(function(...) dplyr::full_join(..., by = c("seqnames", "start", "end")), .) %>% 
+        mutate(bp = (start + end) / 2) %>% select(-c(seqnames, start, end)) %>% tidyr::gather("sample", "score",1:length(bedgraphs2.df))
+      
+      returns$bedgraph2.df = bedgraph2.df
+    })
+    
+    ####################################################################
+    #Bedgraph Plot if "returns$bedgraph.df", "from", "to" are updated
+    ################################## 
+    shiny::observeEvent(list(returns$bedgraph2.df, returns$from, returns$to, input$left_offset), {
+      
+      #check
+      shiny::validate(shiny::need(!is.null(returns$bedgraph2.df), message = "loading bedgraphs..."))
+      
+      #MATplot
+      returns$BGplot2 <- ggplot2::ggplot()+ggplot2::geom_line(data = returns$bedgraph2.df, ggplot2::aes(y = score, x = bp, color = sample))+
         ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$left_offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
@@ -686,14 +751,24 @@ TADkitShinyApp <- function() {
     
     
     output$render_BGplot1 <- shiny::renderPlot({
-      
-      shiny::validate(shiny::need(!is.null(returns$MATplot), message = "start by uploading a mcool file"))
+      shiny::validate(shiny::need(!is.null(returns$MATplot), message = ""))
       shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
       returns$BGplot1}, width = widthSize, height = 300) 
-    output$render_BGplot2 <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = "upload the second mcool file"))
+    
+    output$render_BGplot1B <- shiny::renderPlot({
+      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = ""))
       shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
       returns$BGplot1}, width = widthSize, height = 300)
+    
+    output$render_BGplot2 <- shiny::renderPlot({
+      shiny::validate(shiny::need(!is.null(returns$MATplot), message = ""))
+      shiny::validate(shiny::need(!is.null(returns$BGplot2), message = ""))
+      returns$BGplot2}, width = widthSize, height = 300) 
+    
+    output$render_BGplot2B <- shiny::renderPlot({
+      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = ""))
+      shiny::validate(shiny::need(!is.null(returns$BGplot2), message = ""))
+      returns$BGplot2}, width = widthSize, height = 300)
 
   }
   
