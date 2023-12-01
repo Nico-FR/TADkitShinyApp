@@ -18,7 +18,7 @@
 
 TADkitShinyApp <- function() {
   
-  #set all dataframes names (ie columns) as NULL (to avoid warnings: "no visible binding for global variable")
+  #local variables
   chr <- chrom <- e <- e2 <- group <- i <- j <- s <- s2 <- x <- NULL
   
   ui <- shiny::fluidPage(
@@ -50,14 +50,14 @@ TADkitShinyApp <- function() {
                    #bin width list
                    shiny::selectInput("my_res", "bin width", choices = NULL),
                    
-                   #add horizontal line
-                   shiny::hr(style="height:5px;background:#000000;"),
-                   
                    #balanced box
                    shiny::checkboxInput("my_balanced", "balanced counts", value = FALSE),
                    
-                   #scale colors
+                   #balancing type
                    shiny::selectInput("balanced_name", "balancing type", choices = NULL),
+                   
+                   #add horizontal line
+                   shiny::hr(style="height:5px;background:#000000;"),
                    
                    #log2 box
                    shiny::checkboxInput("my_log2", "log2(counts)", value = TRUE),
@@ -68,7 +68,7 @@ TADkitShinyApp <- function() {
                                selected = "turbo"),
                    
                    #plot size
-                   numericInput("width", "plot size:", 800, min = 100, max = 8000, step = 100),
+                   shiny::numericInput("width", "matrix size:", 800, min = 100, max = 8000, step = 100),
                    
                    #add horizontal line
                    shiny::hr(style="height:5px;background:#000000;"),
@@ -105,14 +105,12 @@ TADkitShinyApp <- function() {
                    shinyFiles::shinyFilesButton("beds", "Choose .bed files" ,
                                                 title = "Please select bed files (no header, tab separated):", multiple = TRUE,
                                                 buttonType = "default", class = NULL),
-                   
-                   #add horizontal line
-                   shiny::hr(style="height:5px;background:#000000;"),
+            
+                   #plot height
+                   shiny::numericInput("height", "plots size:", 700, min = 100, max = 8000, step = 100),
                    
                    #begraphs offset
-                   numericInput("offset_bg1", "left offset (bedgraph set 1):", 0.07, min = -1, max = 4, step = 0.01),
-                   numericInput("offset_bg2", "left offset (bedgraph set 2):", 0.07, min = -1, max = 4, step = 0.01),
-                   numericInput("offset_bed", "left offset (bed):", 0.07, min = -1, max = 4, step = 0.01),
+                   numericInput("offset", "left offset:", 0.07, min = -1, max = 4, step = 0.01),
                    numericInput("annot.col", "bed: column number with annotations", NA, min = 1, max = 20, step = 1),
                    
                    #add horizontal line
@@ -126,10 +124,6 @@ TADkitShinyApp <- function() {
                    shiny::actionButton("reload", "Clear session"),
           )
         ),
-        
-        
-        
-        
       ),
       
       ####################################################################
@@ -152,14 +146,8 @@ TADkitShinyApp <- function() {
                              #MATplot
                              shiny::plotOutput("render_MATplot", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                              
-                             #BGplot1
-                             shiny::plotOutput("render_BGplot1", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
-                             
-                             #BGplot2
-                             shiny::plotOutput("render_BGplot2", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
-                             
-                             #BEDplot
-                             shiny::plotOutput("render_BEDplot", inline = TRUE, width = "auto", height = "400px") %>% shinycssloaders::withSpinner(),
+                             #other_plots
+                             shiny::plotOutput("render_other_plots", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
                             
                     ),
                     
@@ -170,11 +158,8 @@ TADkitShinyApp <- function() {
                              
                                     shiny::plotOutput("render_mMATplot", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
                                     
-                                    shiny::plotOutput("render_BGplot1B", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
-                                    
-                                    shiny::plotOutput("render_BGplot2B", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
-                                    
-                                    shiny::plotOutput("render_BEDplotB", inline = TRUE, width = "auto", height = "800px") %>% shinycssloaders::withSpinner(),
+                                    #other_plots
+                                    shiny::plotOutput("render_other_plots2", inline = TRUE, width = "auto", height = "300px") %>% shinycssloaders::withSpinner(),
                                     ),
                     id = "tabselected"
         )
@@ -185,7 +170,7 @@ TADkitShinyApp <- function() {
   )
   
   server <- function(input, output, session) {
-    
+    . <- V1 <- V2 <- V3 <- V4 <- bp <- end <- score <- seqnames <- start <- end <- NULL
     ####################################################################
     #input values
     ##################################
@@ -215,10 +200,14 @@ TADkitShinyApp <- function() {
       bedgraph2.df = NULL,
       BGplot2 = NULL,
       bed.df = NULL,
-      BEDplot = NULL
+      BEDplot = NULL,
+      BGplot1_2 = NULL
     )
     widthSize <- function() {
       input$width
+    }
+    heightSize <- function() {
+      input$height
     }
     ##################################
     ##################################
@@ -350,7 +339,7 @@ TADkitShinyApp <- function() {
     ##################################
     ##################################
     ####################################################################
-    #melt matrix + log + MATplot when "matrix + from + to + log" are updated
+    #melt matrix + log when "matrix + from + to + log" are updated
     ##################################
     shiny::observeEvent(list(input$my_log2, returns$from, returns$to, returns$matrix), {
       
@@ -699,7 +688,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #Bedgraph Plot if "returns$bedgraph.df", "from", "to" are updated
     ################################## 
-    shiny::observeEvent(list(returns$bedgraph1.df, returns$from, returns$to, input$offset_bg1), {
+    shiny::observeEvent(list(returns$bedgraph1.df, returns$from, returns$to, input$offset), {
       
       #check
       shiny::validate(shiny::need(!is.null(returns$bedgraph1.df), message = "loading bedgraphs..."))
@@ -707,7 +696,7 @@ TADkitShinyApp <- function() {
       #BGplot1
       data.plot = returns$bedgraph1.df %>% filter(bp >= input$start_end[1] & bp <= input$start_end[2])
       returns$BGplot1 <- ggplot2::ggplot()+ggplot2::geom_step(data = data.plot, ggplot2::aes(y = score, x = bp, color = sample))+
-        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$offset_bg1, 0.05)))+ #
+        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
     ####################################################################
@@ -755,7 +744,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #Bedgraph Plot if "returns$bedgraph.df", "from", "to" are updated
     ################################## 
-    shiny::observeEvent(list(returns$bedgraph2.df, returns$from, returns$to, input$offset_bg2), {
+    shiny::observeEvent(list(returns$bedgraph2.df, returns$from, returns$to, input$offset), {
       
       #check
       shiny::validate(shiny::need(!is.null(returns$bedgraph2.df), message = "loading bedgraphs..."))
@@ -763,7 +752,7 @@ TADkitShinyApp <- function() {
       #BGplot2
       data.plot = returns$bedgraph2.df %>% filter(bp >= input$start_end[1] & bp <= input$start_end[2])
       returns$BGplot2 <- ggplot2::ggplot()+ggplot2::geom_step(data = data.plot, ggplot2::aes(y = score, x = bp, color = sample))+
-        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$offset_bg2, 0.05)))+ #
+        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())
     })
     
@@ -810,7 +799,7 @@ TADkitShinyApp <- function() {
     ####################################################################
     #Bed Plot if "returns$bed.df", "from", "to" are updated
     ################################## 
-    shiny::observeEvent(list(returns$bed.df, returns$from, returns$to, input$offset_bed, input$annot.col), {
+    shiny::observeEvent(list(returns$bed.df, returns$from, returns$to, input$offset, input$annot.col), {
       
       #check
       shiny::validate(shiny::need(!is.null(returns$bed.df), message = "loading bedgraphs..."))
@@ -821,47 +810,37 @@ TADkitShinyApp <- function() {
       returns$BEDplot <- ggplot2::ggplot()+
         ggplot2::geom_segment(data=data.plot, aes(y=sample, yend=sample, x=input$start_end[1], xend=input$start_end[2], color=sample), size=1)+
         geom_segment(data=data.plot, aes(y=sample, yend=sample, x=V2, xend=V3), size=4)+
-        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$offset_bed, 0.05)))+ #
+        ggplot2::scale_x_continuous(labels = scales::unit_format(unit = "Mb", scale = 1e-6), limits = c(input$start_end[1], input$start_end[2]), expand = expansion(mult = c(input$offset, 0.05)))+ #
         theme(legend.position="bottom")+ggplot2::theme(axis.title.x = ggplot2::element_blank(), axis.title.y = ggplot2::element_blank(), legend.title = ggplot2::element_blank())+
         ggplot2::geom_text(data=data.plot, aes(y=sample, x=(V2+V3)/2, 
                                                     label=V4), nudge_y = c(-0.25,0.25), check_overlap = TRUE)+
         scale_y_discrete(labels = rep(">", length(unique(data.plot$sample))))
     })
+    
+    
+    ################################
+    #Align bedgraphs and bed plots 
+    ################################
+    shiny::observeEvent(list(returns$BGplot1, returns$BGplot2, returns$BEDplot), {
+      
+      returns$other_plots <- cowplot::plot_grid(returns$BGplot1, returns$BGplot2, returns$BEDplot, 
+                                              ncol = 1, align = "v")
+    
+    })
+    
+    
     ################################## 
     #renderPlot
     ################################## 
-    
-    
-    output$render_BGplot1 <- shiny::renderPlot({
+    output$render_other_plots <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$MATplot), message = ""))
-      shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
-      returns$BGplot1}, width = widthSize, height = 300) 
+      shiny::validate(shiny::need(!is.null(returns$other_plots), message = ""))
+      returns$other_plots}, width = widthSize, height = heightSize) 
     
-    output$render_BGplot1B <- shiny::renderPlot({
+    output$render_other_plots2 <- shiny::renderPlot({
       shiny::validate(shiny::need(!is.null(returns$mMATplot), message = ""))
-      shiny::validate(shiny::need(!is.null(returns$BGplot1), message = ""))
-      returns$BGplot1}, width = widthSize, height = 300)
-    
-    output$render_BGplot2 <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$MATplot), message = ""))
-      shiny::validate(shiny::need(!is.null(returns$BGplot2), message = ""))
-      returns$BGplot2}, width = widthSize, height = 300) 
-    
-    output$render_BGplot2B <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = ""))
-      shiny::validate(shiny::need(!is.null(returns$BGplot2), message = ""))
-      returns$BGplot2}, width = widthSize, height = 300)
-    
-    output$render_BEDplot <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$MATplot), message = ""))
-      shiny::validate(shiny::need(!is.null(returns$BEDplot), message = ""))
-      returns$BEDplot}, width = widthSize, height = 300) 
-    
-    output$render_BEDplotB <- shiny::renderPlot({
-      shiny::validate(shiny::need(!is.null(returns$mMATplot), message = ""))
-      shiny::validate(shiny::need(!is.null(returns$BEDplot), message = ""))
-      returns$BEDplot}, width = widthSize, height = 300)
-
+      shiny::validate(shiny::need(!is.null(returns$other_plots), message = ""))
+      returns$other_plots}, width = widthSize, height = heightSize) 
   }
   
   shiny::shinyApp(ui, server)
