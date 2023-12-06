@@ -1,6 +1,6 @@
 Package: TADkitShinyApp
 Title: Application to plot HiC matrices from mcool files with bedgraph and bed tracks
-Version: 0.0.3.0000
+Version: 0.0.4.0000
 Authors@R: 
     person("Nicolas", "MARY", , "nicolas.mary@envt.fr", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-7304-5555 "))
 Description: This Shiny application allow to plot matrices with domains through a graphical interface (i.e does not require any knowledge of R) with matrix datas stored in a mcool file format. This application takes over the function MATplot and mMATplot from TADkit package to plot matrices. For more possibilities use the TADkit package available from GitHub (`devtools::install_github("Nico-FR/TADkit")`).
