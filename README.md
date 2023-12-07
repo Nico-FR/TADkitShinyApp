@@ -40,6 +40,8 @@ the mcool, which are:
 
 ![](figures/TADkitShinyApp.png)
 
+### Left panel
+
 In the order (top left panel), you can intuitively change :
 
 - chromosome,
@@ -59,3 +61,14 @@ In the order (top left panel), you can intuitively change :
 - load and plot bed track (one or more files, tabulated, no header) with
   3 or more columns (chromosome, start, end),
 - …
+
+### Main panel
+
+The main panel allow to move along the chromosome. By selecting the
+“mMATplot” tab, you can also plot a second matrix. The mcool file can be
+loaded on top of the left panel and the matrix will be plotted on the
+upper part of the graph. The mcool file must have the same parameters as
+those loaded on the left panel.
+
+For more possibilities, use TADkit package
+[GitHub](https://github.com/Nico-FR/TADkit).
