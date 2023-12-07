@@ -29,23 +29,33 @@ TADkitShinyApp::TADkitShinyApp()
 
 First, you need to select the mcool file and the application will plot
 the first chromosome at the hight resolution. It also get metadatas from
-the mcool, which are: \* available chromosome matrices, \* chromosome
-sizes, \* available resolutions (bin width), \* available balancing
-vectors according to their names.
+the mcool, which are:
+
+- available chromosome matrices,
+- chromosome sizes,
+- available resolutions (bin width),
+- available balancing vectors according to their names.
 
 ## Example
 
 ![](figures/TADkitShinyApp.png)
 
-In the order (top left panel), you can intuitively change : \*
-chromosome, \* resolution, \* plot balancing counts (if available), \*
-select balancing vectors, \* plot count values or log2(counts), \*
-increase/decrease plot size, \* load and plot upper domains as red
-triangles (tabulated, no header) with 3 columns (chromosome, domain
-start, domain end), \* load and plot lower domains as red triangles
-(lower part of the matrix), \* removed domains from the plot, \* load
-and plot bedgraph track (one or more files, tabulated, no header) with 4
-columns (chromosome, start, end, score), \* load and plot a second
-bedgraph track, \* load and plot bed track (one or more files,
-tabulated, no header) with 3 or more columns (chromosome, start, end),
-\* …
+In the order (top left panel), you can intuitively change :
+
+- chromosome,
+- resolution,
+- plot balancing counts (if available),
+- select balancing vectors,
+- plot count values or log2(counts),
+- increase/decrease plot size,
+- load and plot upper domains as red triangles (tabulated, no header)
+  with 3 columns (chromosome, domain start, domain end),
+- load and plot lower domains as red triangles (lower part of the
+  matrix),
+- removed domains from the plot,
+- load and plot bedgraph track (one or more files, tabulated, no header)
+  with 4 columns (chromosome, start, end, score),
+- load and plot a second bedgraph track,
+- load and plot bed track (one or more files, tabulated, no header) with
+  3 or more columns (chromosome, start, end),
+- …
